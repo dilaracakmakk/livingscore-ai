@@ -1,14 +1,27 @@
-# LivingScore AI
+# LivingScore AI 
 
-LivingScore AI is a full-stack apartment location analysis platform that helps users evaluate neighborhoods based on environmental and location-based data.
+LivingScore AI is a full-stack location intelligence platform that helps users evaluate apartment locations by analyzing environmental and neighborhood data.
+
+Instead of only displaying map information, LivingScore AI generates a score based on air quality and nearby amenities to provide meaningful insights about a location.
+
+---
 
 ## Features
 
-* Address to coordinates conversion
-* Air quality analysis
-* Location scoring system
-* Nearby places analysis (coming soon)
-* AI-generated neighborhood insights (coming soon)
+* Convert an address into geographic coordinates
+* Analyze air quality using real environmental data
+* Discover nearby places such as:
+
+  * Supermarkets
+  * Hospitals
+  * Schools
+  * Parks
+  * Cafes
+  * Bus stops
+* Generate a neighborhood score based on nearby amenities
+* Calculate an overall LivingScore for a location
+
+---
 
 ## Tech Stack
 
@@ -18,27 +31,52 @@ LivingScore AI is a full-stack apartment location analysis platform that helps u
 * Express.js
 * Axios
 
-### APIs
+### External APIs
 
-* OpenStreetMap Nominatim
+* OpenStreetMap Nominatim API
 * OpenWeather Air Pollution API
+* OpenStreetMap Overpass API
 
-## Current Progress
+---
+
+## Current Features
 
 ### Completed
 
-* Backend setup
-* Geocoding service
+* Backend architecture
+* Address geocoding service
 * Air quality integration
-* Air quality scoring
+* Air quality scoring engine
+* Nearby places analysis
+* Neighborhood scoring algorithm
+* Overall LivingScore calculation
 
-### In Progress
+### Planned Features
 
-* Google Places integration
-* Neighborhood scoring
 * PostgreSQL integration
-* AI insights generation
+* AI-generated neighborhood insights
+* Interactive dashboard
+* Historical location analysis
+* User accounts and saved searches
+
+---
+
+## Example Analysis Flow
+
+Address
+↓
+Coordinates
+↓
+Air Quality Analysis
+↓
+Nearby Places Analysis
+↓
+Neighborhood Score
+↓
+LivingScore
+
+---
 
 ## Project Goal
 
-To help users make better housing decisions by combining environmental, transportation, and amenity data into a single LivingScore.
+The goal of LivingScore AI is to help people make more informed housing decisions by combining environmental conditions and neighborhood amenities into a single, easy-to-understand score.
