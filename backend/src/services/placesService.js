@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 const getNearbyPlaces = async (lat, lon) => {
-  const radius = 1000;
+  const radius = 500;
 
   const query = `
     [out:json][timeout:25];

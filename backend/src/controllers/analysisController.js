@@ -1,7 +1,7 @@
 const { geocodeAddress } = require("../services/geocodeService");
 const { getAirQuality } = require("../services/airQualityService");
 const { getNearbyPlaces } = require("../services/placesService");
-
+const { generateSummary } = require("../services/summaryService");
 const {
   calculateAirQualityScore,
   calculateAmenityScore,
@@ -39,18 +39,23 @@ const analyzeAddress = async (req, res) => {
 
     const totalScore =
       airQualityScore + amenityScore;
-
+const summary = generateSummary({
+  airQuality: airQualityScore,
+  amenities: amenityScore,
+  total: totalScore,
+});
     return res.json({
       success: true,
       address,
       coordinates,
       airQuality,
       nearbyPlaces,
-      scores: {
-        airQuality: airQualityScore,
-        amenities: amenityScore,
-        total: totalScore,
-      },
+     scores: {
+  airQuality: airQualityScore,
+  amenities: amenityScore,
+  total: totalScore,
+},
+summary
     });
   } catch (error) {
     return res.status(500).json({
