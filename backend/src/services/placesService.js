@@ -1,99 +1,126 @@
 const axios = require("axios");
 const { calculateDistance } = require("../utils/distance");
 
-const OVERPASS_ENDPOINTS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-];
-
-const requestOverpass = async (query) => {
-  for (const endpoint of OVERPASS_ENDPOINTS) {
-    try {
-      const response = await axios.post(
-        endpoint,
-        new URLSearchParams({ data: query }).toString(),
-        {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "LivingScoreAI/1.0",
-          },
-          timeout: 15000,
-        }
-      );
-
-      if (!Array.isArray(response.data?.elements)) {
-        throw new Error("Invalid Overpass response");
-      }
-
-      return response.data;
-    } catch (error) {
-      console.warn(
-        `Overpass failed: ${endpoint} - ${error.message}`
-      );
-    }
-  }
-
-  return null;
-};
-
 const getNearbyPlaces = async (lat, lon) => {
-  const radius = 300;
+  console.log("GEOAPIFY SERVICE CALLED");
+  const radius = 1000;
 
-  const query = `
-    [out:json][timeout:10];
-    (
-      node["amenity"="cafe"](around:${radius},${lat},${lon});
-      node["shop"="supermarket"](around:${radius},${lat},${lon});
-      node["amenity"="hospital"](around:${radius},${lat},${lon});
-      node["amenity"="school"](around:${radius},${lat},${lon});
-      node["leisure"="park"](around:${radius},${lat},${lon});
-      node["highway"="bus_stop"](around:${radius},${lat},${lon});
-    );
-    out body;
-  `;
+  const apiKey = process.env.GEOAPIFY_API_KEY;
 
-  const data = await requestOverpass(query);
+  if (!apiKey) {
+    console.error("GEOAPIFY_API_KEY is missing");
 
-  if (data === null) {
     return {
       places: [],
       available: false,
     };
   }
 
-  const places = data.elements
-    .filter(
-      (place) =>
-        typeof place.lat === "number" &&
-        typeof place.lon === "number"
-    )
-    .map((place) => {
-      const distanceKm = calculateDistance(
-        lat,
-        lon,
-        place.lat,
-        place.lon
-      );
+  try {
+    const response = await axios.get(
+      "https://api.geoapify.com/v2/places",
+      {
+        params: {
+          categories: [
+            "catering.cafe",
+            "commercial.supermarket",
+            "healthcare.hospital",
+            "education.school",
+            "leisure.park",
+            "public_transport.bus",
+          ].join(","),
 
-      return {
-        id: place.id,
-        name: place.tags?.name || "Unnamed place",
-        type:
-          place.tags?.amenity ||
-          place.tags?.shop ||
-          place.tags?.leisure ||
-          place.tags?.highway ||
-          "unknown",
-        lat: place.lat,
-        lon: place.lon,
-        distanceKm: Number(distanceKm.toFixed(2)),
-      };
-    });
+          filter: `circle:${lon},${lat},${radius}`,
+          bias: `proximity:${lon},${lat}`,
+          limit: 100,
+          apiKey: apiKey,
+        },
 
-  return {
-    places,
-    available: true,
-  };
+        timeout: 20000,
+      }
+    );
+
+    if (!Array.isArray(response.data?.features)) {
+      throw new Error("Invalid Geoapify response");
+    }
+
+    const places = response.data.features
+      .filter((feature) => {
+        const coordinates = feature.geometry?.coordinates;
+
+        return (
+          Array.isArray(coordinates) &&
+          coordinates.length >= 2 &&
+          Number.isFinite(coordinates[0]) &&
+          Number.isFinite(coordinates[1])
+        );
+      })
+      .map((feature) => {
+        const placeLon = feature.geometry.coordinates[0];
+        const placeLat = feature.geometry.coordinates[1];
+
+        const categories = feature.properties?.categories || [];
+
+        let type = "unknown";
+
+        if (categories.some((c) => c.startsWith("catering.cafe"))) {
+          type = "cafe";
+        } else if (
+          categories.some((c) => c.startsWith("commercial.supermarket"))
+        ) {
+          type = "supermarket";
+        } else if (
+          categories.some((c) => c.startsWith("healthcare.hospital"))
+        ) {
+          type = "hospital";
+        } else if (
+          categories.some((c) => c.startsWith("education.school"))
+        ) {
+          type = "school";
+        } else if (
+          categories.some((c) => c.startsWith("leisure.park"))
+        ) {
+          type = "park";
+        } else if (
+          categories.some((c) => c.startsWith("public_transport.bus"))
+        ) {
+          type = "bus_stop";
+        }
+
+        const distanceKm = calculateDistance(
+          lat,
+          lon,
+          placeLat,
+          placeLon
+        );
+
+        return {
+          id: feature.properties?.place_id || feature.id,
+          name: feature.properties?.name || "Unnamed place",
+          type,
+          lat: placeLat,
+          lon: placeLon,
+          distanceKm: Number(distanceKm.toFixed(2)),
+        };
+      });
+
+    console.log(`Geoapify: ${places.length} places found`);
+
+    return {
+      places,
+      available: true,
+    };
+  } catch (error) {
+    console.error(
+      "Geoapify error:",
+      error.response?.status || error.message
+    );
+
+    return {
+      places: [],
+      available: false,
+    };
+  }
 };
 
 module.exports = { getNearbyPlaces };
