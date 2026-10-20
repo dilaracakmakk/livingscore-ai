@@ -18,42 +18,49 @@ const calculateAirQualityScore = (aqi) => {
 module.exports = {
   calculateAirQualityScore
 };
+const getDistanceMultiplier = (distanceKm) => {
+  if (distanceKm <= 0.2) {
+    return 1;
+  }
+
+  if (distanceKm <= 0.5) {
+    return 0.75;
+  }
+
+  if (distanceKm <= 1) {
+    return 0.5;
+  }
+
+  return 0.25;
+};
 
 const calculateAmenityScore = (places) => {
+  const baseScores = {
+    hospital: 3,
+    school: 2,
+    park: 2,
+    supermarket: 2,
+    bus_stop: 3,
+    cafe: 1,
+  };
+
   let score = 0;
 
   places.forEach((place) => {
-    switch (place.type) {
-      case "hospital":
-        score += 3;
-        break;
+    const baseScore = baseScores[place.type];
 
-      case "school":
-        score += 2;
-        break;
-
-      case "park":
-        score += 2;
-        break;
-
-      case "supermarket":
-        score += 2;
-        break;
-
-      case "bus_stop":
-        score += 3;
-        break;
-
-      case "cafe":
-        score += 1;
-        break;
-
-      default:
-        break;
+    if (!baseScore) {
+      return;
     }
+
+    const distanceMultiplier = getDistanceMultiplier(
+      place.distanceKm
+    );
+
+    score += baseScore * distanceMultiplier;
   });
 
-  return Math.min(score, 25);
+  return Math.min(Number(score.toFixed(2)), 25);
 };
 module.exports = {
   calculateAirQualityScore,

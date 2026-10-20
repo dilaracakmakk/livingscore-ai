@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const { analyzeAddress } = require("../controllers/analysisController");
+const {
+  analyzeLocation,
+} = require("../controllers/analysisController");
 
-router.post("/", analyzeAddress);
+router.post("/", analyzeLocation);
 
 module.exports = router;
